@@ -2,33 +2,50 @@ import { create } from 'zustand';
 import type { User } from '../types/game';
 
 type AuthState = {
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   user: User | null;
-  setAuth: (token: string, user: User) => void;
-  logout: () => void;
+  ready: boolean;
+  setAuth: (accessToken: string, refreshToken: string, user: User) => void;
+  setUser: (user: User) => void;
+  clearAuth: () => void;
+  setReady: (ready: boolean) => void;
 };
 
 const key = 'planet-manager-auth';
 
 const initial = (() => {
   const raw = localStorage.getItem(key);
-  if (!raw) return { token: null, user: null };
+  if (!raw) return { accessToken: null, refreshToken: null, user: null };
   try {
-    return JSON.parse(raw) as { token: string | null; user: User | null };
+    const parsed = JSON.parse(raw) as { accessToken?: string | null; refreshToken?: string | null; user: User | null; token?: string | null };
+    return {
+      accessToken: parsed.accessToken ?? parsed.token ?? null,
+      refreshToken: parsed.refreshToken ?? null,
+      user: parsed.user
+    };
   } catch {
-    return { token: null, user: null };
+    return { accessToken: null, refreshToken: null, user: null };
   }
 })();
 
 export const useAuthStore = create<AuthState>((set) => ({
-  token: initial.token,
+  accessToken: initial.accessToken,
+  refreshToken: initial.refreshToken,
   user: initial.user,
-  setAuth: (token, user) => {
-    localStorage.setItem(key, JSON.stringify({ token, user }));
-    set({ token, user });
+  ready: false,
+  setAuth: (accessToken, refreshToken, user) => {
+    localStorage.setItem(key, JSON.stringify({ accessToken, refreshToken, user }));
+    set({ accessToken, refreshToken, user });
   },
-  logout: () => {
+  setUser: (user) => {
+    const { accessToken, refreshToken } = useAuthStore.getState();
+    localStorage.setItem(key, JSON.stringify({ accessToken, refreshToken, user }));
+    set({ user });
+  },
+  clearAuth: () => {
     localStorage.removeItem(key);
-    set({ token: null, user: null });
-  }
+    set({ accessToken: null, refreshToken: null, user: null });
+  },
+  setReady: (ready) => set({ ready })
 }));

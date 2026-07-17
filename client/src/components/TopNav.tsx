@@ -1,8 +1,16 @@
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
+import { api } from '../api/client';
 
 export function TopNav() {
-  const { user, logout } = useAuthStore();
+  const { user, refreshToken, clearAuth } = useAuthStore();
+
+  async function logout() {
+    if (refreshToken) {
+      await api<{ ok: boolean }>('/auth/logout', { method: 'POST', body: { refreshToken } }).catch(() => undefined);
+    }
+    clearAuth();
+  }
 
   return (
     <header className="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-6 py-3">
