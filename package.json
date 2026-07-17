@@ -1,0 +1,25 @@
+{
+  "name": "a-l-cs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test -w server && npm run test -w client",
+    "dev": "npm run dev -w server & npm run dev -w client",
+    "build": "npm run build -w server && npm run build -w client",
+    "lint": "npm run lint -w server && npm run lint -w client"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://localhost:26831/Ev0k3d/A-L-CS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "private": "true",
+  "workspaces": [
+    "client",
+    "server"
+  ]
+}
