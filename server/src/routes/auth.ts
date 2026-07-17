@@ -7,6 +7,14 @@ import { signToken } from '../lib/auth.js';
 import { requireAuth, type AuthedRequest } from '../middleware/authMiddleware.js';
 
 export const authRouter = Router();
+const TEST_EMAIL = 'test';
+const TEST_PASSWORD = 'test';
+const TEST_DISPLAY_NAME = 'Test User';
+
+function isDefaultTestLogin(email: string, password: string) {
+  return email === TEST_EMAIL && password === TEST_PASSWORD;
+}
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
@@ -47,8 +55,8 @@ authRouter.post('/register', async (req, res) => {
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6)
+  email: z.string().min(1),
+  password: z.string().min(1)
 });
 
 authRouter.post('/login', async (req, res) => {
@@ -59,7 +67,33 @@ authRouter.post('/login', async (req, res) => {
   }
 
   const { email, password } = parsed.data;
-  const user = await prisma.user.findUnique({ where: { email } });
+  const isTestLogin = isDefaultTestLogin(email, password);
+  if (!isTestLogin) {
+    const strictValidation = z.object({
+      email: z.string().email(),
+      password: z.string().min(6)
+    });
+    const strictParsed = strictValidation.safeParse({ email, password });
+    if (!strictParsed.success) {
+      res.status(400).json({ error: 'Invalid input' });
+      return;
+    }
+  }
+
+  const user = isTestLogin
+    ? await prisma.user.upsert({
+        where: { email: TEST_EMAIL },
+        update: {
+          displayName: TEST_DISPLAY_NAME,
+          passwordHash: await bcrypt.hash(TEST_PASSWORD, 10)
+        },
+        create: {
+          email: TEST_EMAIL,
+          displayName: TEST_DISPLAY_NAME,
+          passwordHash: await bcrypt.hash(TEST_PASSWORD, 10)
+        }
+      })
+    : await prisma.user.findUnique({ where: { email } });
   if (!user) {
     res.status(401).json({ error: 'Invalid credentials' });
     return;
