@@ -7,11 +7,12 @@ Planet Manager is a full-stack browser strategy simulation where you guide a pla
 - **Frontend:** React + TypeScript + Tailwind CSS + React Router + Recharts
 - **Backend:** Node.js + Express + TypeScript
 - **Database:** Prisma + SQLite
-- **Auth:** JWT-based account registration/login
+- **Auth:** JWT access tokens + rotating refresh sessions
 
 ## Features Implemented
 
-- User account creation and login
+- User account creation/login with stronger password policy
+- Rotating refresh-token sessions, logout/logout-all, and password change endpoint
 - Save/load multiple planets per user
 - Planet creation with type + seed-based generation
 - Turn-based simulation loop with era progression
@@ -63,4 +64,3 @@ Planet Manager is a full-stack browser strategy simulation where you guide a pla
 - Lint: `npm run lint`
 - Build: `npm run build`
 - Test: `npm run test`
-

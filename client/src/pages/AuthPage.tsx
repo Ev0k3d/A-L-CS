@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuthStore } from '../store/auth';
 import { Panel } from '../components/Panel';
@@ -10,19 +10,28 @@ export function AuthPage() {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { setAuth } = useAuthStore();
+  const { accessToken, setAuth } = useAuthStore();
   const navigate = useNavigate();
+
+  if (accessToken) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    if (isRegister && password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
     try {
-      const result = await api<{ token: string; user: { id: string; email: string; displayName: string } }>(
+      const result = await api<{ accessToken: string; refreshToken: string; user: { id: string; email: string; displayName: string } }>(
         `/auth/${isRegister ? 'register' : 'login'}`,
         { method: 'POST', body: isRegister ? { email, password, displayName } : { email, password } }
       );
-      setAuth(result.token, result.user);
+      setAuth(result.accessToken, result.refreshToken, result.user);
       navigate('/dashboard');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Authentication failed');
@@ -47,6 +56,13 @@ export function AuthPage() {
             <span className="mb-1 block text-slate-300">Password</span>
             <input className="w-full border border-slate-700 bg-slate-900 p-2" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </label>
+          {isRegister ? (
+            <label className="block text-sm">
+              <span className="mb-1 block text-slate-300">Confirm password</span>
+              <input className="w-full border border-slate-700 bg-slate-900 p-2" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+            </label>
+          ) : null}
+          <p className="text-xs text-slate-400">Password must include uppercase, lowercase, and a number.</p>
           {error ? <p className="text-sm text-red-300">{error}</p> : null}
           <button className="w-full border border-blue-400 bg-blue-500/20 py-2 text-sm font-semibold text-blue-100" type="submit">
             {isRegister ? 'Create Account' : 'Sign In'}
